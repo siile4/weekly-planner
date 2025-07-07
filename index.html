@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Planner</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 1400px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+        }
+
+        h2, h3 {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        li:hover {
+            background-color: #f9f9f9;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        li span.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+        }
+
+        .top-section {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .habit-header {
+            display: grid;
+            grid-template-columns: 2fr repeat(7, 1fr);
+            font-weight: bold;
+            padding: 0 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .habit-header .habit-name {
+            text-align: left;
+        }
+
+        .habit-item {
+            display: grid;
+            grid-template-columns: 2fr repeat(7, 1fr);
+            align-items: center;
+            text-align: center;
+        }
+        
+        .habit-item .habit-text {
+            text-align: left;
+            padding-left: 8px;
+        }
+        
+        .habit-item input[type="checkbox"] {
+            justify-self: center;
+            margin: 0;
+        }
+
+        .bottom-section {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 25px;
+        }
+
+        .day-column {
+            background-color: #fdfdfd;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="top-section">
+            <div class="weekly-priorities">
+                <h2>🗓️ Weekly Priorities</h2>
+                <ul id="priorities-list"></ul>
+                <input type="text" id="new-priority" placeholder="Add a new priority...">
+            </div>
+            <div class="habit-tracker">
+                <h2>🎯 Habit Tracker</h2>
+                <div class="habit-header">
+                    <div class="habit-name">Habit</div>
+                    <div>M</div>
+                    <div>T</div>
+                    <div>W</div>
+                    <div>T</div>
+                    <div>F</div>
+                    <div>S</div>
+                    <div>S</div>
+                </div>
+                <ul id="habits-list"></ul>
+                <input type="text" id="new-habit" placeholder="Add a new habit...">
+            </div>
+        </div>
+        <div class="bottom-section">
+            <div class="day-column" id="monday">
+                <h3>Monday</h3>
+                <ul class="tasks-list"></ul>
+                <input type="text" class="new-task" placeholder="Add a task...">
+            </div>
+            <div class="day-column" id="tuesday">
+                <h3>Tuesday</h3>
+                <ul class="tasks-list"></ul>
+                <input type="text" class="new-task" placeholder="Add a task...">
+            </div>
+            <div class="day-column" id="wednesday">
+                <h3>Wednesday</h3>
+                <ul class="tasks-list"></ul>
+                <input type="text" class="new-task" placeholder="Add a task...">
+            </div>
+            <div class="day-column" id="thursday">
+                <h3>Thursday</h3>
+                <ul class="tasks-list"></ul>
+                <input type="text" class="new-task" placeholder="Add a task...">
+            </div>
+            <div class="day-column" id="friday">
+                <h3>Friday</h3>
+                <ul class="tasks-list"></ul>
+                <input type="text" class="new-task" placeholder="Add a task...">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Add item on 'Enter' key press
+            document.getElementById('new-priority').addEventListener('keypress', handleEnter(addPriority));
+            document.getElementById('new-habit').addEventListener('keypress', handleEnter(addHabit));
+            document.querySelectorAll('.new-task').forEach(input => {
+                input.addEventListener('keypress', handleEnter((value) => {
+                    const dayId = input.parentElement.id;
+                    addTask(dayId, value);
+                }));
+            });
+        }
+
+        function handleEnter(action) {
+            return function(e) {
+                if (e.key === 'Enter' && this.value.trim() !== '') {
+                    action(this.value.trim());
+                    this.value = '';
+                }
+            };
+        }
+
+        function addPriority(text) {
+            const list = document.getElementById('priorities-list');
+            list.appendChild(createListItem(text, 'priority'));
+            saveData();
+        }
+
+        function addHabit(text) {
+            const list = document.getElementById('habits-list');
+            const li = document.createElement('li');
+            li.className = 'habit-item';
+            
+            const span = document.createElement('span');
+            span.className = 'habit-text';
+            span.textContent = text;
+            li.appendChild(span);
+
+            for (let i = 0; i < 7; i++) {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.addEventListener('change', saveData);
+                li.appendChild(checkbox);
+            }
+            list.appendChild(li);
+            saveData();
+        }
+
+        function addTask(dayId, text) {
+            const list = document.getElementById(dayId).querySelector('.tasks-list');
+            list.appendChild(createListItem(text, 'task'));
+            saveData();
+        }
+
+        function createListItem(text, type) {
+            const li = document.createElement('li');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            
+            const span = document.createElement('span');
+            span.textContent = text;
+
+            checkbox.addEventListener('change', () => {
+                span.classList.toggle('completed', checkbox.checked);
+                saveData();
+            });
+
+            li.appendChild(checkbox);
+            li.appendChild(span);
+            return li;
+        }
+
+        function saveData() {
+            const data = {
+                priorities: [],
+                habits: [],
+                tasks: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [] }
+            };
+
+            // Save priorities
+            document.querySelectorAll('#priorities-list li').forEach(li => {
+                data.priorities.push({
+                    text: li.querySelector('span').textContent,
+                    checked: li.querySelector('input').checked
+                });
+            });
+
+            // Save habits
+            document.querySelectorAll('#habits-list .habit-item').forEach(li => {
+                const checkedDays = Array.from(li.querySelectorAll('input[type="checkbox"]')).map(cb => cb.checked);
+                data.habits.push({
+                    text: li.querySelector('.habit-text').textContent,
+                    checked: checkedDays
+                });
+            });
+
+            // Save daily tasks
+            Object.keys(data.tasks).forEach(dayId => {
+                document.querySelectorAll(`#${dayId} .tasks-list li`).forEach(li => {
+                    data.tasks[dayId].push({
+                        text: li.querySelector('span').textContent,
+                        checked: li.querySelector('input').checked
+                    });
+                });
+            });
+
+            localStorage.setItem('plannerData-v2', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const data = JSON.parse(localStorage.getItem('plannerData-v2'));
+            if (!data) return;
+
+            // Load priorities
+            data.priorities.forEach(item => {
+                addPriority(item.text);
+                const lastItem = document.querySelector('#priorities-list li:last-child');
+                if (lastItem) {
+                    lastItem.querySelector('input').checked = item.checked;
+                    if (item.checked) {
+                        lastItem.querySelector('span').classList.add('completed');
+                    }
+                }
+            });
+
+            // Load habits
+            data.habits.forEach(item => {
+                addHabit(item.text);
+                const lastItem = document.querySelector('#habits-list li:last-child');
+                if (lastItem) {
+                    lastItem.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+                        checkbox.checked = item.checked[index];
+                    });
+                }
+            });
+
+            // Load daily tasks
+            Object.keys(data.tasks).forEach(dayId => {
+                data.tasks[dayId].forEach(item => {
+                    addTask(dayId, item.text);
+                    const list = document.querySelector(`#${dayId} .tasks-list`);
+                    const lastItem = list.querySelector('li:last-child');
+                    if (lastItem) {
+                        lastItem.querySelector('input').checked = item.checked;
+                        if (item.checked) {
+                            lastItem.querySelector('span').classList.add('completed');
+                        }
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
